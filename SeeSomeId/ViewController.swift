@@ -9,8 +9,11 @@ class ViewController: UIViewController {
 
     var faceDetectionRequest: VNRequest!
     var textDetectionRequest: VNRequest!
-    var currentLandmarks: [VNFaceObservation]?
-    var idLandmarks: [VNFaceObservation]?
+    var referenceLandmarks: VNFaceLandmarks2D?
+    var currentLandmarks: VNFaceLandmarks2D?
+    var currentObservation: VNFaceObservation?
+    var referenceObservation: VNFaceObservation?
+
     var didSeeId = false
 
     private enum SessionSetupResult {
@@ -35,7 +38,7 @@ class ViewController: UIViewController {
         faceDetectionRequest = VNDetectFaceLandmarksRequest(completionHandler: self.handleFaceLandmarks)
         textDetectionRequest = VNDetectTextRectanglesRequest(completionHandler: self.handleTexts)
         setupCardVision()
-        
+        nextButton.isEnabled = false
         switch AVCaptureDevice.authorizationStatus(for: AVMediaType.video){
         case .authorized:
             break
@@ -61,13 +64,7 @@ class ViewController: UIViewController {
     }
     
     override func viewWillDisappear(_ animated: Bool) {
-        sessionQueue.async { [unowned self] in
-            if self.setupResult == .success {
-                self.session.stopRunning()
-                self.isSessionRunning = self.session.isRunning
-                self.removeObservers()
-            }
-        }
+        disappear()
         super.viewWillDisappear(animated)
     }
 
@@ -113,12 +110,7 @@ class ViewController: UIViewController {
 
     @IBAction func moveOn(_ sender: Any) {
 
-        idLandmarks = currentLandmarks
-        if let landmarks = idLandmarks {
-            for landmark in landmarks {
-                print(landmark)
-            }
-        }
+        referenceObservation = currentObservation
         nextButton.titleLabel?.text = "Done"
         // switch the camera to selfie mode
         didSeeId = true
@@ -133,6 +125,29 @@ class ViewController: UIViewController {
             self.setupFaceVision()
             self.startRunning()
         }
+    }
+
+    func disappear() {
+        sessionQueue.async { [unowned self] in
+            if self.setupResult == .success {
+                self.session.stopRunning()
+                self.isSessionRunning = self.session.isRunning
+                self.removeObservers()
+            }
+        }
+    }
+
+    func itsAMatch() {
+
+        disappear()
+
+        DispatchQueue.main.async { [unowned self] in
+            let message = NSLocalizedString("It's a match", comment: "We have match")
+            let alertController = UIAlertController(title: "SeeSomeId", message: message, preferredStyle: .alert)
+            alertController.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "Alert OK button"), style: .cancel, handler: nil))
+            self.present(alertController, animated: true, completion: nil)
+        }
+
     }
 
     private func configureSession(_ preferredPosition: AVCaptureDevice.Position) {
@@ -162,7 +177,13 @@ class ViewController: UIViewController {
                 }
             }
 
-            let videoDeviceInput = try AVCaptureDeviceInput(device: defaultVideoDevice!)
+            guard let videoDevice = defaultVideoDevice else {
+                setupResult = .configurationFailed
+                session.commitConfiguration()
+                return
+            }
+
+            let videoDeviceInput = try AVCaptureDeviceInput(device: videoDevice)
             if session.canAddInput(videoDeviceInput) {
                 session.addInput(videoDeviceInput)
                 self.videoDeviceInput = videoDeviceInput
@@ -181,6 +202,7 @@ class ViewController: UIViewController {
                 session.commitConfiguration()
                 return
             }
+
         } catch {
             print("\(error)")
             setupResult = .configurationFailed
@@ -302,7 +324,7 @@ extension ViewController {
             //perform all the UI updates on the main queue
             guard let results = request.results as? [VNTextObservation] else { return }
             //self.previewView.removeMask()
- //           self.previewView.removeMask(index: 3)
+            self.previewView.removeMask(index: 3)
             for text in results {
                 self.previewView.drawTextboundingBox(text: text)
             }
@@ -313,20 +335,62 @@ extension ViewController {
         DispatchQueue.main.async {
             //perform all the UI updates on the main queue
             guard let results = request.results as? [VNFaceObservation] else { return }
-            self.currentLandmarks = results
 
+            self.nextButton.isEnabled = results.count == 1
             self.previewView.removeMask()
             //self.previewView.removeMask(index: 4)
+
+            if self.nextButton.isEnabled {
+                self.currentObservation = results[0]
+            } else {
+                self.currentObservation = nil
+            }
+
             if self.didSeeId {
                 self.previewView.drawFaceOval()
+                if self.match(observation: self.currentObservation) {
+                    print("it's a match")
+                    //self.itsAMatch()
+                }
             } else {
                 self.previewView.drawCardBox()
             }
 
             for face in results {
-                self.previewView.drawFaceWithLandmarks(face: face)
+                if self.didSeeId && self.referenceObservation != nil {
+                    self.previewView.drawFaceWithLandmarks(face: face, reference: self.referenceObservation)
+                } else {
+                    self.previewView.drawFaceWithLandmarks(face: face, reference: nil)
+                }
             }
         }
+    }
+
+    func match(observation: VNFaceObservation?) -> Bool {
+
+        if let currentPoints = observation?.landmarks?.allPoints?.normalizedPoints, let referencePoints = referenceObservation?.landmarks?.allPoints?.normalizedPoints {
+            var dev:CGFloat = 0.0
+            print(currentPoints)
+            print(referencePoints)
+            for i in 0..<currentPoints.count {
+                let p0 = currentPoints[i]
+                let p1 = referencePoints[i]
+                dev += p0.d2(p1)
+            }
+            print(dev)
+            if dev < 0.1 {
+                return true
+            }
+        }
+        return false
+    }
+}
+
+extension CGPoint {
+    func d2(_ point: CGPoint) -> CGFloat {
+        let dx2 = (x - point.x)*(x - point.x)
+        let dy2 = (y - point.y)*(y - point.y)
+        return dx2 + dy2
     }
 }
 
