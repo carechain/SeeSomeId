@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14313.13.2" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.9"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="tne-QT-ifu">
+            <objects>
+                <viewController id="BYZ-38-t0r" customClass="ViewController" customModule="SeeSomeId" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
+                        <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="DJU-kI-TMg" customClass="PreviewView" customModule="SeeSomeId" customModuleProvider="target">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                                <subviews>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="jOV-wn-Wr2">
+                                        <rect key="frame" x="162" y="617" width="51" height="42"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="25"/>
+                                        <state key="normal" title="Next"/>
+                                        <connections>
+                                            <action selector="moveOn:" destination="BYZ-38-t0r" eventType="touchUpInside" id="bl8-Fr-4q1"/>
+                                        </connections>
+                                    </button>
+                                </subviews>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <constraints>
+                                    <constraint firstItem="jOV-wn-Wr2" firstAttribute="bottom" secondItem="DJU-kI-TMg" secondAttribute="bottomMargin" id="Rpp-Yi-0ZX"/>
+                                    <constraint firstItem="jOV-wn-Wr2" firstAttribute="centerX" secondItem="DJU-kI-TMg" secondAttribute="centerX" id="sdI-ve-hGh"/>
+                                </constraints>
+                            </view>
+                        </subviews>
+                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstItem="DJU-kI-TMg" firstAttribute="bottom" secondItem="wfy-db-euE" secondAttribute="top" id="6am-C9-WNe"/>
+                            <constraint firstItem="DJU-kI-TMg" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="Ono-Ny-1jw"/>
+                            <constraint firstItem="DJU-kI-TMg" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="Ql4-FM-Wau"/>
+                            <constraint firstAttribute="trailing" secondItem="DJU-kI-TMg" secondAttribute="trailing" id="RIi-Bn-zQg"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="nextButton" destination="jOV-wn-Wr2" id="k9t-nQ-w0V"/>
+                        <outlet property="previewView" destination="DJU-kI-TMg" id="0gd-Nq-oNQ"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="136.80000000000001" y="138.98050974512745"/>
+        </scene>
+    </scenes>
+</document>
