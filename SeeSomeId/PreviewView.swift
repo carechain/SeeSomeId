@@ -96,6 +96,16 @@ class PreviewView: UIView {
 
     }
 
+    func drawAlert(message: String) {
+        let label = CATextLayer()
+        label.fontSize = 40.0
+        label.string = message
+        label.foregroundColor = UIColor.red.cgColor
+        label.frame = CGRect(x: 0, y: 0, width: self.frame.size.width, height: 45.0)
+        maskLayer.append(label)
+        layer.insertSublayer(label, at: 1)
+    }
+
     func drawTextboundingBox(text : VNTextObservation) {
         let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: -frame.height)
         let translate = CGAffineTransform.identity.scaledBy(x: frame.width, y: frame.height)

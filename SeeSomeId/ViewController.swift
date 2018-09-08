@@ -367,18 +367,16 @@ extension ViewController {
     }
 
     func match(observation: VNFaceObservation?) -> Bool {
-
         if let currentPoints = observation?.landmarks?.allPoints?.normalizedPoints, let referencePoints = referenceObservation?.landmarks?.allPoints?.normalizedPoints {
-            var dev:CGFloat = 0.0
-            print(currentPoints)
-            print(referencePoints)
+            var deviation:CGFloat = 0.0
             for i in 0..<currentPoints.count {
                 let p0 = currentPoints[i]
                 let p1 = referencePoints[i]
-                dev += p0.d2(p1)
+                deviation += p0.d2(p1)
             }
-            print(dev)
-            if dev < 0.1 {
+            if deviation < 0.1 {
+                //String(describing: deviation)
+                self.previewView.drawAlert(message: "MATCH!")
                 return true
             }
         }
