@@ -19,7 +19,7 @@ class ViewController: UIViewController {
         case configurationFailed
     }
 
-    private var devicePosition: AVCaptureDevice.Position = .back
+    private var devicePosition: AVCaptureDevice.Position = .front
     private var session = AVCaptureSession()
     private var isSessionRunning = false
     private let sessionQueue = DispatchQueue(label: "SessionQueue", attributes: [], target: nil)
@@ -34,7 +34,7 @@ class ViewController: UIViewController {
         previewView.session = session
         faceDetectionRequest = VNDetectFaceLandmarksRequest(completionHandler: self.handleFaceLandmarks)
         textDetectionRequest = VNDetectTextRectanglesRequest(completionHandler: self.handleTexts)
-        setupVision()
+        setupCardVision()
         
         switch AVCaptureDevice.authorizationStatus(for: AVMediaType.video){
         case .authorized:
@@ -125,16 +125,19 @@ class ViewController: UIViewController {
         nextButton.isHidden = true
 
         // start all over with a fresh session
-        devicePosition = .front
+        self.previewView.removeMask()
         session = AVCaptureSession()
         previewView.session = session
         sessionQueue.async { [unowned self] in
             self.configureSession(.front)
+            self.setupFaceVision()
             self.startRunning()
         }
     }
 
     private func configureSession(_ preferredPosition: AVCaptureDevice.Position) {
+
+        devicePosition = preferredPosition
 
         if self.setupResult != .success {
             return
@@ -234,16 +237,16 @@ class ViewController: UIViewController {
             case left0ColBottom = 8
         }
         var exifOrientation: DeviceOrientation
-        
+
         switch UIDevice.current.orientation {
         case .portraitUpsideDown:
-            exifOrientation = .left0ColBottom
+            exifOrientation =  devicePosition == .front ? .left0ColTop :  .left0ColBottom
         case .landscapeLeft:
-            exifOrientation = devicePosition == .front ? .bottom0ColRight : .top0ColLeft
+            exifOrientation = devicePosition == .front ? .bottom0ColLeft : .top0ColRight
         case .landscapeRight:
-            exifOrientation = devicePosition == .front ? .top0ColLeft : .bottom0ColRight
+            exifOrientation = devicePosition == .front ? .top0ColRight : .bottom0ColLeft
         default:
-            exifOrientation = .right0ColTop
+            exifOrientation =  devicePosition == .front ? .left0ColTop : .right0ColTop
         }
         return exifOrientation.rawValue
     }
@@ -285,35 +288,24 @@ extension ViewController {
 }
 
 extension ViewController {
-    func setupVision() {
+
+    func setupCardVision() {
         self.requests = [faceDetectionRequest, textDetectionRequest]
     }
 
-    func handle(request: VNRequest, error: Error?) {
-        DispatchQueue.main.async {
-            self.previewView.removeMask()
-            if let textResults = request.results as? [VNTextObservation] {
-                for text in textResults {
-                    self.previewView.drawTextboundingBox(text: text)
-                }
-            }
-            if let faceResults = request.results as? [VNFaceObservation] {
-                for face in faceResults {
-                    self.previewView.drawFaceWithLandmarks(face: face)
-                }
-            }
-       }
+    func setupFaceVision() {
+        self.requests = [faceDetectionRequest]
     }
 
     func handleTexts(request: VNRequest, error: Error?) {
         DispatchQueue.main.async {
             //perform all the UI updates on the main queue
             guard let results = request.results as? [VNTextObservation] else { return }
-            /*
-            self.previewView.removeMask()
+            //self.previewView.removeMask()
+ //           self.previewView.removeMask(index: 3)
             for text in results {
                 self.previewView.drawTextboundingBox(text: text)
-            }*/
+            }
         }
     }
 
@@ -322,7 +314,15 @@ extension ViewController {
             //perform all the UI updates on the main queue
             guard let results = request.results as? [VNFaceObservation] else { return }
             self.currentLandmarks = results
+
             self.previewView.removeMask()
+            //self.previewView.removeMask(index: 4)
+            if self.didSeeId {
+                self.previewView.drawFaceOval()
+            } else {
+                self.previewView.drawCardBox()
+            }
+
             for face in results {
                 self.previewView.drawFaceWithLandmarks(face: face)
             }

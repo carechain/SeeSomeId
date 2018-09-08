@@ -1,1 +1,5 @@
 # SeeSomeId
+
+pod install
+
+

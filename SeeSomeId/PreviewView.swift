@@ -4,16 +4,15 @@ import AVFoundation
 
 class PreviewView: UIView {
     
-    private var maskLayer = [CAShapeLayer]()
+    private var maskLayer = [CALayer]()
     var videoPreviewLayer: AVCaptureVideoPreviewLayer {
         return layer as! AVCaptureVideoPreviewLayer
     }
-    
+
     var session: AVCaptureSession? {
         get {
             return videoPreviewLayer.session
         }
-        
         set {
             videoPreviewLayer.session = newValue
         }
@@ -23,7 +22,7 @@ class PreviewView: UIView {
         return AVCaptureVideoPreviewLayer.self
     }
     
-    private func createLayer(in rect: CGRect) -> CAShapeLayer{
+    private func createLayer(in rect: CGRect, index: UInt32) -> CAShapeLayer{
         let mask = CAShapeLayer()
         mask.frame = rect
         mask.cornerRadius = 10
@@ -31,33 +30,82 @@ class PreviewView: UIView {
         mask.borderColor = UIColor.yellow.cgColor
         mask.borderWidth = 2.0
         maskLayer.append(mask)
-        layer.insertSublayer(mask, at: 1)
-        
+        layer.insertSublayer(mask, at: index)
         return mask
     }
 
-    func drawTextboundingBox(text : VNTextObservation) {
+    func drawFaceOval() {
+        let width = 0.9*self.frame.size.width
+        let x = 0.05*self.frame.size.width
+        let height = width
+        let y = 0.5*self.frame.size.height - 0.5*height
+        let rect = CGRect(x: x, y: y, width: width, height: height)
+        let mask = CAShapeLayer()
+        mask.frame = rect
+        mask.cornerRadius = 10
+        mask.opacity = 0.75
+        mask.borderColor = UIColor.white.cgColor
+        mask.borderWidth = 3.0
+        maskLayer.append(mask)
+        layer.insertSublayer(mask, at: 2)
 
+        let label = CATextLayer()
+        label.fontSize = 20.0
+        label.string = "Make sure the yellow square is inside the white"
+        label.foregroundColor = UIColor.white.cgColor
+        label.frame = CGRect(x: x + 10.0, y: y + height, width: width, height: 20.0)
+        maskLayer.append(label)
+        layer.insertSublayer(label, at: 2)
+
+
+    }
+
+    func drawCardBox() {
+        let width = 0.9*self.frame.size.width
+        let x = 0.05*self.frame.size.width
+        let height = width/1.586
+        let y = 0.5*self.frame.size.height - 0.5*height
+        let rect = CGRect(x: x, y: y, width: width, height: height)
+        let mask = CAShapeLayer()
+        mask.frame = rect
+        mask.cornerRadius = 10
+        mask.opacity = 0.75
+        mask.borderColor = UIColor.white.cgColor
+        mask.borderWidth = 3.0
+        maskLayer.append(mask)
+        layer.insertSublayer(mask, at: 1)
+
+
+        let label = CATextLayer()
+        label.fontSize = 20.0
+        label.string = "Fit your identity card in the box"
+        label.foregroundColor = UIColor.white.cgColor
+        label.frame = CGRect(x: x + 10.0, y: y + height, width: width, height: 20.0)
+        maskLayer.append(label)
+        layer.insertSublayer(label, at: 1)
+
+
+    }
+
+    func drawTextboundingBox(text : VNTextObservation) {
         let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: -frame.height)
         let translate = CGAffineTransform.identity.scaledBy(x: frame.width, y: frame.height)
         let textbounds = text.boundingBox.applying(translate).applying(transform)
-        _ = createLayer(in: textbounds)
+        _ = createLayer(in: textbounds, index: 3)
     }
 
     func drawFaceboundingBox(face : VNFaceObservation) {
-        
         let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: -frame.height)
         let translate = CGAffineTransform.identity.scaledBy(x: frame.width, y: frame.height)
         let facebounds = face.boundingBox.applying(translate).applying(transform)
-        _ = createLayer(in: facebounds)
+        _ = createLayer(in: facebounds, index: 4)
     }
     
     func drawFaceWithLandmarks(face: VNFaceObservation) {
-        
         let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: -frame.height)
         let translate = CGAffineTransform.identity.scaledBy(x: frame.width, y: frame.height)
         let facebounds = face.boundingBox.applying(translate).applying(transform)
-        let faceLayer = createLayer(in: facebounds)
+        let faceLayer = createLayer(in: facebounds, index: 4)
         
         drawLandmarks(on: faceLayer, faceLandmarkRegion: (face.landmarks?.nose)!, isClosed:false)
         drawLandmarks(on: faceLayer, faceLandmarkRegion: (face.landmarks?.noseCrest)!, isClosed:false)
@@ -77,20 +125,17 @@ class PreviewView: UIView {
     func drawLandmarks(on targetLayer: CALayer, faceLandmarkRegion: VNFaceLandmarkRegion2D, isClosed: Bool = true) {
         let rect: CGRect = targetLayer.frame
         var points: [CGPoint] = []
-        
         for i in 0..<faceLandmarkRegion.pointCount {
             let point = faceLandmarkRegion.normalizedPoints[i]
             points.append(point)
         }
-        
         let landmarkLayer = drawPointsOnLayer(rect: rect, landmarkPoints: points, isClosed: isClosed)
         landmarkLayer.transform = CATransform3DMakeAffineTransform(
             CGAffineTransform.identity
                 .scaledBy(x: rect.width, y: -rect.height)
                 .translatedBy(x: 0, y: -1)
         )
-
-        targetLayer.insertSublayer(landmarkLayer, at: 1)
+        targetLayer.insertSublayer(landmarkLayer, at: 4)
     }
     
     func drawPointsOnLayer(rect:CGRect, landmarkPoints: [CGPoint], isClosed: Bool = true) -> CALayer {
@@ -100,26 +145,31 @@ class PreviewView: UIView {
         for point in landmarkPoints.dropFirst() {
             linePath.addLine(to: point)
         }
-        
         if isClosed {
             linePath.addLine(to: landmarkPoints.first!)
         }
-        
         let lineLayer = CAShapeLayer()
         lineLayer.path = linePath.cgPath
         lineLayer.fillColor = nil
         lineLayer.opacity = 1.0
         lineLayer.strokeColor = UIColor.green.cgColor
         lineLayer.lineWidth = 0.02
-        
         return lineLayer
     }
-    
+
+    func removeMask(index: UInt32) {
+        let layerIndex = Int(index)
+        if layerIndex < maskLayer.count {
+            let mask = maskLayer[layerIndex]
+            mask.removeFromSuperlayer()
+        }
+        maskLayer.removeAll()
+    }
+
     func removeMask() {
         for mask in maskLayer {
             mask.removeFromSuperlayer()
         }
         maskLayer.removeAll()
     }
-    
 }
