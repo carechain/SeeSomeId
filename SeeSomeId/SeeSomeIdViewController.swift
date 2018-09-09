@@ -2,7 +2,7 @@ import UIKit
 import AVFoundation
 import Vision
 
-class ViewController: UIViewController {
+class SeeSomeIdViewController: UIViewController {
 
     @IBOutlet weak var nextButton: UIButton!
     @IBOutlet weak var previewView: PreviewView!
@@ -13,7 +13,6 @@ class ViewController: UIViewController {
     var currentLandmarks: VNFaceLandmarks2D?
     var currentObservation: VNFaceObservation?
     var referenceObservation: VNFaceObservation?
-
     var didSeeId = false
 
     private enum SessionSetupResult {
@@ -138,22 +137,18 @@ class ViewController: UIViewController {
     }
 
     func itsAMatch() {
-
         disappear()
-
         DispatchQueue.main.async { [unowned self] in
             let message = NSLocalizedString("It's a match", comment: "We have match")
             let alertController = UIAlertController(title: "SeeSomeId", message: message, preferredStyle: .alert)
             alertController.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: "Alert OK button"), style: .cancel, handler: nil))
             self.present(alertController, animated: true, completion: nil)
         }
-
     }
 
     private func configureSession(_ preferredPosition: AVCaptureDevice.Position) {
 
         devicePosition = preferredPosition
-
         if self.setupResult != .success {
             return
         }
@@ -274,7 +269,7 @@ class ViewController: UIViewController {
     }
 }
 
-extension ViewController {
+extension SeeSomeIdViewController {
     private func addObservers() {
         NotificationCenter.default.addObserver(self, selector: #selector(sessionRuntimeError), name: Notification.Name("AVCaptureSessionRuntimeErrorNotification"), object: session)
         NotificationCenter.default.addObserver(self, selector: #selector(sessionWasInterrupted), name: Notification.Name("AVCaptureSessionWasInterruptedNotification"), object: session)
@@ -309,7 +304,7 @@ extension ViewController {
     }
 }
 
-extension ViewController {
+extension SeeSomeIdViewController {
 
     func setupCardVision() {
         self.requests = [faceDetectionRequest, textDetectionRequest]
@@ -392,7 +387,7 @@ extension CGPoint {
     }
 }
 
-extension ViewController: AVCaptureVideoDataOutputSampleBufferDelegate{
+extension SeeSomeIdViewController: AVCaptureVideoDataOutputSampleBufferDelegate{
     // MARK: - AVCaptureVideoDataOutputSampleBufferDelegate
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer),
